@@ -1,33 +1,19 @@
-import requests
-import hashlib
-from docx import Document
-from random import random
-from datetime import datetime
+import telebot
+import getSubs
 
-URL = 'http://rgkript.ru/wp-content/uploads//'
-FILENAME = hashlib.sha512(str(random()).encode('utf-8')).hexdigest()
+bot = telebot.TeleBot(input('Enter telegram bot API key. '))
 
-def getSubstitutionURL():
-    """
-    Returns RGKRIP url to download substitutions.
-    """
-    day = datetime.now().day
-    if day < 10:
-        day = '0' + str(day)
-        if datetime.now().hour > 16:
-            day = '0' + str(int(day)+1)
-    month = datetime.now().month
-    if month < 10:
-        month = '0' + str(month)
-    year = datetime.now().year
-    return f'{URL}{year}/{month}/ZAMENY-{day}.{month}.{year}.doc'
+@bot.message_handler(commands=['start'])
+def start(message):
+    bot.send_message(message.chat.id, 'Привет! Для того, чтобы воспользоваться функционалом бота введи комманду <b>/substitutions</b>', parse_mode='html')
 
+@bot.message_handler(commands=['substitutions'], content_types=['text'])
+def substitutuions(message):
+    send = bot.send_message(message.chat.id, 'Отправьте название вашей группы. Пример: ПО-22к.')
+    bot.register_next_step_handler(send, getSubstitutions)
+def getSubstitutions(message):
+    msg = getSubs.getSubstitutions(message.text)
+    bot.send_message(message.chat.id, msg)
 
-data = requests.get(getSubstitutionURL())
-with open(FILENAME[::10] + '.doc', 'wb') as file:
-    file.write(data.content)
+bot.polling(none_stop=True)
 
-doc = Document(f'{FILENAME[::10]}.doc')
-print(doc.tables)
-
-print(URL + getSubstitutionURL())
