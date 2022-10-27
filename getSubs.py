@@ -38,6 +38,7 @@ def downloadSubs(url, fileName):
         file.write(data.content)
 
 def getSubstitutions(groupName):
+    date = getDate()
     fileName = getFileName()
     downloadSubs(getURL(getDate()), fileName)
     # run(f'libreoffice --headless --convert-to pdf {fileName}.doc'.split())
@@ -70,4 +71,4 @@ def getSubstitutions(groupName):
 
     os.remove(f'{fileName}.pdf')
     if subs.__len__() == 0: return 'У вас нет замен'
-    if subs.__len__() > 0: return f'Замены на {".".join(getDate().values())}:\n' + '\n\n'.join(subs)
+    if subs.__len__() > 0: return f'Замены на {".".join(date.values())}:\n' + '\n\n'.join(subs)
