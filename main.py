@@ -1,7 +1,10 @@
 import telebot
 import getSubs
+import os
 
-bot = telebot.TeleBot(input('Enter telegram bot API key. '))
+API_TOKEN = ''
+
+bot = telebot.TeleBot(API_TOKEN)
 
 @bot.message_handler(commands=['start'])
 def start(message):
@@ -15,5 +18,5 @@ def getSubstitutions(message):
     msg = getSubs.getSubstitutions(message.text)
     bot.send_message(message.chat.id, msg)
 
+print("Bot succesfully started.")
 bot.polling(none_stop=True)
-

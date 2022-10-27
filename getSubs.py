@@ -7,48 +7,68 @@ from random import random
 from datetime import datetime
 
 URL = 'http://rgkript.ru/wp-content/uploads//'
-FILENAME = hashlib.sha512(str(random()).encode('utf-8')).hexdigest()[::10]
 
-def getURL():
+def getFileName():
+    return hashlib.sha512(str(random()).encode('utf-8')).hexdigest()[::10]
+
+def getDate():
+    """
+    Returns substitutions date.
+    """
+    monthDayQntt = (31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31)
+    day = datetime.now().day if datetime.now().weekday() < 5 else datetime.now().day + (7 - datetime.now().weekday())
+    month = datetime.now().month if day < monthDayQntt[datetime.now().month-1] else datetime.now().month+1
+    if month > datetime.now().month: day -= monthDayQntt[month-2]
+    month = f'0{month}' if month < 10 else str(month)
+    day = f'0{day}' if day < 10 else str(day)
+    year = str(datetime.now().year)
+    return {'day': day, 'month': month, 'year': year}
+
+def getURL(date):
     """
     Returns RGKRIPT url to download substitutions.
     """
-    day = datetime.now().day
-    day = f'0{day}'
-    if datetime.now().weekday() == 5:
-        day = f'0{int(day)+2}'
-    elif datetime.now().weekday() == 6:
-        day = f'0{int(day)+1}'
-    elif (datetime.now().hour > 18) and (datetime.now().minute > 30):
-        day = f'0{int(day)+1}'
-    if day.__len__() == 3:
-        day = day[1::]
-    month = datetime.now().month
-    if month < 10:
-        month = f'0{month}'
-    year = datetime.now().year
-    print(f'{URL}{year}/{month}/ZAMENY-{day}.{month}.{year}.doc')
-    return f'{URL}{year}/{month}/ZAMENY-{day}.{month}.{year}.doc'
+    return f'{URL}{date["year"]}/{date["month"]}/ZAMENY-{date["day"]}.{date["month"]}.{date["year"]}-1.pdf'
 
-def getSubstitutions(groupName):
-    data = requests.get(getURL())
-    with open(f'{FILENAME}.doc', 'wb') as file:
+def downloadSubs(url, fileName):
+    """
+    Downloads and saves a file with substitutions.
+    """
+    data = requests.get(url)
+    with open(f'{fileName}.pdf', 'wb') as file:
         file.write(data.content)
 
-    run(f'libreoffice --headless --convert-to pdf {FILENAME}.doc'.split())
+def getSubstitutions(groupName):
+    fileName = getFileName()
+    downloadSubs(getURL(getDate()), fileName)
+    # run(f'libreoffice --headless --convert-to pdf {fileName}.doc'.split())
 
-    tables = tabula.io.read_pdf(f'{FILENAME}.pdf', multiple_tables=True, lattice=True, pages='all')
+    tables = tabula.read_pdf(f'{fileName}.pdf', multiple_tables=True, lattice=True, pages='all')
+
+    if tables.__len__() == 0:
+        os.remove(f'{fileName}.pdf')
+        date = getDate()
+        date['day'] = str(int(date['day'])+1)
+        downloadSubs(getURL(date), fileName)
+        tables = tabula.read_pdf(f'{fileName}.pdf', multiple_tables=True, lattice=True, pages='all')
+        if tables.__len__() == 0:
+            os.remove(f'{fileName}.pdf')
+            date = getDate()
+            date['day'] = str(int(date['day'])+2)
+            downloadSubs(getURL(date), fileName)
+            tables = tabula.read_pdf(f'{fileName}.pdf', multiple_tables=True, lattice=True, pages='all')
 
     subs = []
 
     for table in tables:
         for i in range(table.__len__()):
             sub = []
-            if table.iloc[i,0] == groupName:
+            if str(table.iloc[i,0]).lower() == groupName.lower():
                 for j in range(4):
                     if str(table.iloc[i,j+1]) != 'nan':
                         sub.append(str(table.iloc[i,j+1]))
                 subs.append(', '.join(sub))
 
+    os.remove(f'{fileName}.pdf')
     if subs.__len__() == 0: return 'У вас нет замен'
-    if subs.__len__() > 0: return '\n'.join(subs)
+    if subs.__len__() > 0: return f'Замены на {".".join(getDate().values())}:\n' + '\n\n'.join(subs)
