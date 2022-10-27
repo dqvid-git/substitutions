@@ -2,7 +2,6 @@ import requests
 import hashlib
 import os
 import tabula
-from subprocess import run
 from random import random
 from datetime import datetime
 

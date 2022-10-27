@@ -1,6 +1,5 @@
 import telebot
 import getSubs
-import os
 
 API_TOKEN = ''
 
