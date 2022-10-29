@@ -16,8 +16,9 @@ def getDate():
     """
     monthDayQntt = (31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31)
     day = datetime.now().day if datetime.now().weekday() < 5 else datetime.now().day + (7 - datetime.now().weekday())
-    month = datetime.now().month if day < monthDayQntt[datetime.now().month-1] else datetime.now().month+1
-    if month > datetime.now().month: day -= monthDayQntt[month-2]
+    day = day if datetime.now().hour < 16 and datetime.now().day < day else day+1
+    month = datetime.now().month if day < monthDayQntt[datetime.now().month-1] and datetime.now().day < day else datetime.now().month+1
+    if month > datetime.now().month: day -= monthDayQntt[month-2]-1
     month = f'0{month}' if month < 10 else str(month)
     day = f'0{day}' if day < 10 else str(day)
     year = str(datetime.now().year)
@@ -42,6 +43,7 @@ def getSubstitutions(groupName):
     fileName = getFileName()
     downloadSubs(getURL(getDate()), fileName)
     # run(f'libreoffice --headless --convert-to pdf {fileName}.doc'.split())
+    print(date)
 
     tables = tabula.read_pdf(f'{fileName}.pdf', multiple_tables=True, lattice=True, pages='all')
 
@@ -49,12 +51,14 @@ def getSubstitutions(groupName):
         os.remove(f'{fileName}.pdf')
         date = getDate()
         date['day'] = str(int(date['day'])+1)
+        print(date)
         downloadSubs(getURL(date), fileName)
         tables = tabula.read_pdf(f'{fileName}.pdf', multiple_tables=True, lattice=True, pages='all')
         if tables.__len__() == 0:
             os.remove(f'{fileName}.pdf')
             date = getDate()
-            date['day'] = str(int(date['day'])+2)
+            date['day'] = str(int(date['day'])-1)
+            print(date)
             downloadSubs(getURL(date), fileName)
             tables = tabula.read_pdf(f'{fileName}.pdf', multiple_tables=True, lattice=True, pages='all')
 

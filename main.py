@@ -1,7 +1,8 @@
 import telebot
 import getSubs
+from time import sleep
 
-API_TOKEN = ''
+API_TOKEN = '5126410715:AAFtJupDbLCLo_6XeIJULxrNw-jAEVkX1Ig'
 
 bot = telebot.TeleBot(API_TOKEN)
 
@@ -14,8 +15,17 @@ def substitutuions(message):
     send = bot.send_message(message.chat.id, 'Отправьте название вашей группы. Пример: ПО-22к.')
     bot.register_next_step_handler(send, getSubstitutions)
 def getSubstitutions(message):
+    waitMsg = bot.send_message(message.chat.id, 'Подождите...')
     msg = getSubs.getSubstitutions(message.text)
+    bot.delete_message(message.chat.id, waitMsg.id)
     bot.send_message(message.chat.id, msg)
 
-print("Bot succesfully started.")
+def start():
+    try:
+        print("Bot succesfully started.")
+        bot.polling(none_stop=True)
+    except Exception as _ex:
+        print(_ex)
+        start()
+        sleep(15)
 bot.polling(none_stop=True)
