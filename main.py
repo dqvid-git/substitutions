@@ -26,6 +26,6 @@ def start():
         bot.polling(none_stop=True)
     except Exception as _ex:
         print(_ex)
-        start()
         sleep(15)
-bot.polling(none_stop=True)
+        start()
+start()
