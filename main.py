@@ -2,7 +2,7 @@ import telebot
 import getSubs
 from time import sleep
 
-API_TOKEN = '5126410715:AAFtJupDbLCLo_6XeIJULxrNw-jAEVkX1Ig'
+API_TOKEN = ''
 
 bot = telebot.TeleBot(API_TOKEN)
 
